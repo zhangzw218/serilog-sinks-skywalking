@@ -31,28 +31,29 @@ namespace Serilog.Sinks.Skywalking
 
         public void Emit(LogEvent logEvent)
         {
-            string renderMessage;
+            var logs = new Dictionary<string, object>
+            {
+                { "Level", logEvent.Level.ToString() }
+            };
             if (_formatter != null)
             {
                 using var render = new StringWriter(CultureInfo.InvariantCulture);
                 _formatter.Format(logEvent, render);
-
-                renderMessage = render.ToString();
+                logs.Add("Message", render.ToString());
             }
             else
             {
-                renderMessage = logEvent.RenderMessage();
-
+                //等升级到2.2.0版本，就可以将这些标签，设置到Tags中 #https://github.com/SkyAPM/SkyAPM-dotnet/issues/518
+                logs.Add("Message", logEvent.RenderMessage());
+                foreach (var prop in logEvent.Properties)
+                {
+                    logs.Add($"fields.{prop.Key}", prop.Value);
+                }
                 if (logEvent.Exception != null)
-                    renderMessage += Environment.NewLine + logEvent.Exception.ToString();
+                    logs.Add($"Exception", logEvent.Exception);
             }
 
-            var logs = new Dictionary<string, object>
-            {
-                { "Level", logEvent.Level.ToString() },
-                { "logMessage", renderMessage }
-            };
-            SegmentContext segmentContext = _entrySegmentContextAccessor.Context;
+            var segmentContext = _entrySegmentContextAccessor.Context;
             var logContext = new LoggerRequest
             {
                 Logs = logs,
