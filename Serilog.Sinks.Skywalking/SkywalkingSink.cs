@@ -11,6 +11,8 @@ using System.IO;
 using System.Threading.Tasks;
 using SkyApm.Tracing.Segments;
 using LogEvent = Serilog.Events.LogEvent;
+using SkyApm.Common;
+using SkyApm.Config;
 
 namespace Serilog.Sinks.Skywalking
 {
@@ -31,35 +33,38 @@ namespace Serilog.Sinks.Skywalking
 
         public void Emit(LogEvent logEvent)
         {
-            var logs = new Dictionary<string, object>
+            var tags = new Dictionary<string, object>
             {
                 { "Level", logEvent.Level.ToString() }
             };
+            var message = string.Empty;
             if (_formatter != null)
             {
                 using var render = new StringWriter(CultureInfo.InvariantCulture);
                 _formatter.Format(logEvent, render);
-                logs.Add("Message", render.ToString());
+                message = render.ToString();
             }
             else
             {
-                //等升级到2.2.0版本，就可以将这些标签，设置到Tags中 #https://github.com/SkyAPM/SkyAPM-dotnet/issues/518
-                logs.Add("Message", logEvent.RenderMessage());
+                message = logEvent.RenderMessage();
                 foreach (var prop in logEvent.Properties)
                 {
-                    logs.Add($"fields.{prop.Key}", prop.Value);
+                    tags.Add($"fields.{prop.Key}", prop.Value);
                 }
                 if (logEvent.Exception != null)
-                    logs.Add($"Exception", logEvent.Exception);
+                {
+                    message += "\r\n" + (logEvent.Exception.HasInnerExceptions() ? logEvent.Exception.ToDemystifiedString(10) : logEvent.Exception.ToString());
+                }
             }
 
             var segmentContext = _entrySegmentContextAccessor.Context;
-            var logContext = new LoggerRequest
+            var logContext = new LogRequest
             {
-                Logs = logs,
+                Message = message ?? string.Empty,
+                Tags = tags,
                 SegmentReference = segmentContext == null
                     ? null
-                    : new LoggerSegmentReference
+                    : new LogSegmentReference
                     {
                         TraceId = segmentContext.TraceId,
                         SegmentId = segmentContext.SegmentId
