@@ -13,6 +13,7 @@ using SkyApm.Tracing.Segments;
 using LogEvent = Serilog.Events.LogEvent;
 using SkyApm.Common;
 using SkyApm.Config;
+using System.Text.Json;
 
 namespace Serilog.Sinks.Skywalking
 {
@@ -49,7 +50,8 @@ namespace Serilog.Sinks.Skywalking
                 message = logEvent.RenderMessage();
                 foreach (var prop in logEvent.Properties)
                 {
-                    tags.Add($"fields.{prop.Key}", prop.Value);
+                    var val = prop.Value.ToString("l", new TagsFormat());
+                    tags.Add(prop.Key, val);
                 }
                 if (logEvent.Exception != null)
                 {
@@ -70,7 +72,10 @@ namespace Serilog.Sinks.Skywalking
                         SegmentId = segmentContext.SegmentId
                     }
             };
-
+            if (segmentContext != null)
+            {
+                logContext.Endpoint = segmentContext.Span.OperationName.ToString();
+            }
             _skyApmLogDispatcher.Dispatch(logContext);
         }
     }

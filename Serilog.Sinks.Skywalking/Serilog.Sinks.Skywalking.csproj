@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
-		<Version>0.3.0</Version>
+		<TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0</TargetFrameworks>
+		<Version>0.3.0-zzw.2</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageProjectUrl>https://github.com/SpringHgui/serilog-sinks-skywalking</PackageProjectUrl>
@@ -20,7 +20,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Serilog" Version="2.10.0" />
-		<PackageReference Include="SkyAPM.Core" Version="$(SkyAPMPackageVersion)" />
+		<PackageReference Include="SkyAPM.Core" Version="2.2.0-zzw.2" />
 		<PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.3.1" />
 	</ItemGroup>
 	<ItemGroup>
